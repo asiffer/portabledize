@@ -1,0 +1,3 @@
+main /usr/bin/main
+main.c /usr/src/main.c
+main.service /usr/lib/systemd/system/main.service
