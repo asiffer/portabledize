@@ -29,9 +29,9 @@ command_exists() {
 }
 
 # List of required commands
-required_commands="id sudo e2fsck resize2fs dumpe2fs grep \
-awk truncate wc mkdir uname touch bc \
-dd mkfs.ext4 dirname cp umount"
+required_commands="id sudo e2fsck resize2fs dumpe2fs mkfs.ext4 grep \
+awk truncate wc mkdir basename uname touch dd bc \
+dirname cp umount"
 readonly required_commands
 
 # Check all required commands
@@ -135,26 +135,28 @@ get_file_size_in_mb() {
 }
 
 usage() {
-    echo "Usage: $0 -e ENTRYPOINT -s SERVICE_FILE 
-        [-o IMAGE] [-f INSTALL_FILE] [-m MOUNTPOINT] [-i INITIAL_DISK_SIZE (MiB)] [-v]"
+    bin=$(basename "$0")
+    echo "Usage: $bin [-s SERVICE_FILE] [-d OUTPUT_DIR] [-f INSTALL_FILE] [-m MOUNTPOINT] [-i INITIAL_DISK_SIZE (MiB)] [-v]"
     exit 1
 }
 
 # Initialize variables
-IMAGE="image.raw"
+OUTPUT_DIR="$(pwd)"
 INITIAL_DISK_SIZE="200" # Initial size in MiB
 MOUNTPOINT="/mnt/portabledize"
 DEBUG=$FALSE
 INSTALL_FILE=""
+SERVICE_FILE=""
 
 # Parse options using getopts
-while getopts "o:i:f:m:v" opt; do
+while getopts "s:d:i:f:m:v" opt; do
     case "$opt" in
-    o) IMAGE=$OPTARG ;;
+    d) OUTPUT_DIR=$OPTARG ;;
     v) DEBUG=$TRUE ;;
     i) INITIAL_DISK_SIZE=$OPTARG ;;
     f) INSTALL_FILE=$OPTARG ;;
     m) MOUNTPOINT=$OPTARG ;;
+    s) SERVICE_FILE=$OPTARG ;;
     ?) usage ;;
     esac
 done
@@ -166,9 +168,16 @@ shift $((OPTIND - 1))
 # if [ -z "$ENTRYPOINT" ] || [ -z "$SERVICE_FILE" ]; then
 #     usage
 # fi
-if [ -z "${INSTALL_FILE}" ]; then
+if [ -z "$SERVICE_FILE" ]; then
     usage
 fi
+# if [ -z "${INSTALL_FILE}" ]; then
+#     usage
+# fi
+
+# final image path
+SERVICE_NAME=$(basename "${SERVICE_FILE}")
+IMAGE="${OUTPUT_DIR}/${SERVICE_NAME%.*}.raw"
 
 # Create an empty file
 log "Creating image file ${IMAGE}"
@@ -192,17 +201,24 @@ sudo chown -R "${OWNER}" "${MOUNTPOINT}"
 log "Populating image disk"
 build_skeleton "${MOUNTPOINT}"
 
+# install service file
+log "Installing service file"
+cp "${SERVICE_FILE}" "${MOUNTPOINT}/usr/lib/systemd/system/${SERVICE_NAME}"
+
 # installation files
-log "Installing extra files"
-while IFS=' ' read -r source destination; do
-    destination=$(ensure_starts_with_slash "${destination}")
-    absolute_destination="${MOUNTPOINT}${destination}"
-    destination_directory=$(dirname "${absolute_destination}")
-    if [ -n "${source}" ] && [ -n "${destination}" ]; then
-        mkdir -p "${destination_directory}" && debug "Creating directory ${destination_directory}"
-        cp "${source}" "${MOUNTPOINT}${destination}" && debug "${source} -> ${MOUNTPOINT}${destination}"
-    fi
-done <"${INSTALL_FILE}"
+if [ -e "${INSTALL_FILE}" ]; then
+    base_source=$(dirname "${INSTALL_FILE}")
+    log "Installing extra files"
+    while IFS=' ' read -r source destination; do
+        destination=$(ensure_starts_with_slash "${destination}")
+        absolute_destination="${MOUNTPOINT}${destination}"
+        destination_directory=$(dirname "${absolute_destination}")
+        if [ -n "${source}" ] && [ -n "${destination}" ]; then
+            mkdir -p "${destination_directory}" && debug "Creating directory ${destination_directory}"
+            cp "${base_source}/${source}" "${MOUNTPOINT}${destination}" && debug "${base_source}/${source} -> ${MOUNTPOINT}${destination}"
+        fi
+    done <"${INSTALL_FILE}"
+fi
 
 # Unmount the image
 log "Unmounting ${MOUNTPOINT}"
@@ -214,3 +230,10 @@ max_trim_image "${IMAGE}"
 
 final_size=$(get_file_size_in_mb "${IMAGE}")
 success "Raw disk image created and trimmed: ${IMAGE} (${final_size} MB)"
+
+# github action
+if [ -n "${GITHUB_OUTPUT}" ]; then
+    echo "image=${IMAGE}" >>"$GITHUB_OUTPUT"
+fi
+
+exit 0

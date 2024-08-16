@@ -1,0 +1,36 @@
+# action.yml
+name: "Portabledize"
+author: "Alban Siffer"
+description: "Bundle your app in a systemd portable service"
+inputs:
+  output_dir:
+    description: "Output directory"
+    required: false
+    default: "."
+  initial_disk_size:
+    description: "Initial image size in MiB"
+    required: false
+    default: "200"
+  mountpoint:
+    description: "Temporary image mountpoint"
+    required: false
+    default: "/mnt/portabledize"
+  install_file:
+    description: "Extra files mapping"
+    required: false
+  service_file:
+    description: "Systemd service file"
+    required: true
+  output_file:
+    description: ""
+outputs:
+  image: # id of output
+    description: "Path to the image that has been created"
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  args:
+    - "-s ${{ inputs.service_file }}"
+    - "-d ${{ inputs.output_dir }}"
+    - "-i ${{ inputs.initial_disk_size }}"
+    - "-m ${{ inputs.mountpoint }}"
