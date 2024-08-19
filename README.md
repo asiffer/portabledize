@@ -2,6 +2,12 @@
 
 Bundle your app in a [systemd portable service](https://systemd.io/PORTABLE_SERVICES/)!
 
+## Installation
+
+```sh
+wget https://raw.githubusercontent.com/asiffer/portabledize/master/portabledize.sh
+```
+
 ## Get started
 
 **Prepare your files.** You must declare the systemd service file and possibly the files you need to run your app (you may have at least an entrypoint file, like a statically compiled binary). Example:
@@ -25,4 +31,25 @@ portabledize.sh -s my-service.service -f files.txt
 ```sh
 sudo portablectl attach my-service.raw
 sudo systemctl start my-service
+```
+
+## Github Action
+
+```yaml
+on: [push]
+
+jobs:
+  portabledize_job:
+    runs-on: ubuntu-latest
+    name: portabledize
+    steps:
+      - name: Build image
+        id: systemd_image
+        uses: actions/portabledize@v1
+        with:
+          service_file: "my-service.service"
+          install_file: "files.txt"
+      # Use the output from the `systemd_image` step
+      - name: Print the image file
+        run: echo "${{ steps.systemd_image.outputs.image }}"
 ```
