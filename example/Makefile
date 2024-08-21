@@ -1,6 +1,7 @@
 IMAGE=main.raw
-MOUNTPOINT=/mnt/test0
+MOUNTPOINT=/tmp/portabledize
 FILES=files 
+SERVICE_FILE=main.service
 PORTABLE=/etc/portables/$(IMAGE)
 
 .DEFAULT_GOAL := $(IMAGE)
@@ -10,12 +11,13 @@ main: main.c
 
 clean:
 	rm -f *.raw
+	rm -f $(MOUNTPOINT)
 
 $(MOUNTPOINT):
 	sudo mkdir -p $@
 
 $(IMAGE): $(FILES)
-	../portabledize.sh -o $@ -f $^ -v 
+	../portabledize.sh -s $(SERVICE_FILE) -f $^ -v 
 
 mount: $(IMAGE) $(MOUNTPOINT)
 	sudo mount -o loop $(IMAGE) $(MOUNTPOINT)
@@ -23,12 +25,12 @@ mount: $(IMAGE) $(MOUNTPOINT)
 umount: $(MOUNTPOINT)
 	sudo umount $^
 
-unmount:umount
+unmount: umount
 
 attach: $(PORTABLE)
 
 $(PORTABLE): $(IMAGE)
-	sudo portablectl attach ./$^
+	sudo portablectl attach ./$<
 
 detach: $(IMAGE) $(PORTABLE)
 	sudo portablectl detach ./$<

@@ -50,7 +50,7 @@ int main()
         // Afficher l'écran
         for (i = 0; i < ROWS; i++)
         {
-            printf("\033[%d;1H%s\n", i + 1, screen[i]);
+            printf("\033[32m\033[%d;1H%s\033[0m\n", i + 1, screen[i]);
         }
 
         nanosleep(&ts, NULL);
