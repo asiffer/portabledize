@@ -33,7 +33,7 @@ command_exists() {
 # List of required commands
 required_commands="id sudo e2fsck resize2fs dumpe2fs mkfs.ext4 grep \
 awk truncate wc mkdir basename uname touch dd bc \
-dirname cp umount"
+dirname cp umount rsync"
 readonly required_commands
 
 # Check all required commands
@@ -223,7 +223,7 @@ if [ -e "${INSTALL_FILE}" ]; then
         if [ -f "${absolute_source}" ] && [ -n "${destination}" ]; then
             mkdir -p "${destination_directory}" && debug "Creating directory ${destination_directory}"
             rsync -a --copy-links "${absolute_source}" "${absolute_destination}" && debug "${base_source}/${source} -> ${absolute_destination}"
-        else 
+        else
             error "${absolute_source} seems missing (cannot install it to ${absolute_destination})"
         fi
     done <"${INSTALL_FILE}"
