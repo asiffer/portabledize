@@ -209,7 +209,7 @@ cp "${SERVICE_FILE}" "${MOUNTPOINT}/usr/lib/systemd/system/${SERVICE_NAME}"
 if [ -e "${INSTALL_FILE}" ]; then
     base_source=$(dirname "${INSTALL_FILE}")
     log "Installing extra files"
-    while IFS=' ' read -r source destination; do
+    while IFS=' ' read -r source destination || [ -n "${source}" ]; do
         destination=$(ensure_starts_with_slash "${destination}")
         absolute_destination="${MOUNTPOINT}${destination}"
         destination_directory=$(dirname "${absolute_destination}")
