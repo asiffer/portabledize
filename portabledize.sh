@@ -215,6 +215,7 @@ if [ -e "${INSTALL_FILE}" ]; then
         destination=$(ensure_starts_with_slash "${destination}")
         absolute_destination="${MOUNTPOINT}${destination}"
         destination_directory=$(dirname "${absolute_destination}")
+        absolute_source="${base_source}/${source}"
         # check absolute path (if the source starts with a slash, it is already absolute)
         if [ "${source#/}" != "${source}" ]; then
             absolute_source="${source}"
