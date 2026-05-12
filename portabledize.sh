@@ -7,6 +7,7 @@ readonly TRUE
 readonly FALSE
 OWNER="$(id -u):$(id -g)"
 readonly OWNER
+ERROR=0
 
 log() {
     printf "%s\n" "$@"
@@ -17,6 +18,7 @@ success() {
 }
 
 error() {
+    ERROR=1
     printf "\e[31m%s\e[0m\n" "$@"
 }
 
@@ -240,6 +242,11 @@ success "Raw disk image created and trimmed: ${IMAGE} (${final_size} MB)"
 # github action
 if [ -n "${GITHUB_OUTPUT}" ]; then
     echo "image=${IMAGE}" >>"$GITHUB_OUTPUT"
+fi
+
+# check errors
+if [ "$ERROR" -ne 0 ]; then
+    exit 1
 fi
 
 exit 0
