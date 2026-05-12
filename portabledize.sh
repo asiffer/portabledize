@@ -213,9 +213,15 @@ if [ -e "${INSTALL_FILE}" ]; then
         destination=$(ensure_starts_with_slash "${destination}")
         absolute_destination="${MOUNTPOINT}${destination}"
         destination_directory=$(dirname "${absolute_destination}")
-        if [ -n "${source}" ] && [ -n "${destination}" ]; then
+        # check absolute path (if the source starts with a slash, it is already absolute)
+        if [ "${source#/}" != "${source}" ]; then
+            absolute_source="${source}"
+        fi
+        if [ -f "${absolute_source}" ] && [ -n "${destination}" ]; then
             mkdir -p "${destination_directory}" && debug "Creating directory ${destination_directory}"
-            cp "${base_source}/${source}" "${MOUNTPOINT}${destination}" && debug "${base_source}/${source} -> ${MOUNTPOINT}${destination}"
+            rsync -a --copy-links "${absolute_source}" "${absolute_destination}" && debug "${base_source}/${source} -> ${absolute_destination}"
+        else 
+            error "${absolute_source} seems missing (cannot install it to ${absolute_destination})"
         fi
     done <"${INSTALL_FILE}"
 fi
