@@ -2,6 +2,9 @@
 name: "Portabledize"
 author: "Alban Siffer"
 description: "Bundle your app in a systemd portable service"
+branding:
+  color: "gray-dark"
+  icon: "truck"
 inputs:
   output_dir:
     description: "Output directory"
